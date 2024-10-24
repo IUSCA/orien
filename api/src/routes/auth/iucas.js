@@ -48,6 +48,7 @@ router.post(
         const resObj = await authService.onLogin({ user });
         
         console.log('resObj', resObj);
+
         return res.json(resObj);
       }
       // User was authenticated with CAS but they are not a portal user
@@ -59,9 +60,12 @@ router.post(
       const test_user = await authService.find_or_create_test_user({ role: req.body.ticket });
       await login(test_user.cas_id);
     } else {
+      console.log('validating ticket...');
       IULogin.validate(req.body.ticket, req.body.service, false, async (err, cas_id) => {
+        console.log('If there is an err: ', err);
         if (err) return next(err);
         try {
+          console.log('trying to login...');
           await login(cas_id);
         } catch (err2) {
           return next(err2);
