@@ -31,10 +31,13 @@ function issueJWT({ userProfile, forever = false }) {
 const get_user_profile = _.pick(['username', 'email', 'name', 'roles', 'cas_id', 'id']);
 
 async function onLogin({ user, updateLastLogin = true, method = 'IUCAS' }) {
+  console.log('Updating last login for...', user);
   if (updateLastLogin) { await userService.updateLastLogin({ id: user.id, method }); }
 
+  console.log('Getting user profile...');
   const userProfile = get_user_profile(user);
 
+  console.log('Issuing JWT...');
   const token = issueJWT({ userProfile });
   return {
     profile: userProfile,
