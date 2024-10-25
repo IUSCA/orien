@@ -38,7 +38,7 @@
         </div>
 
         <!-- Google -->
-        <div
+        <!-- <div
           class="flex justify-between px-8 mb-3"
           v-if="config.auth_enabled.google"
         >
@@ -58,10 +58,10 @@
               <span class="dark:text-slate-100"> Login with Google </span>
             </div>
           </va-button>
-        </div>
+        </div> -->
 
         <!-- CI Logon -->
-        <div
+        <!-- <div
           class="flex justify-between px-8 mb-3"
           v-if="config.auth_enabled.cilogon"
         >
@@ -81,14 +81,14 @@
               <span class="dark:text-slate-100"> Login with CILogon </span>
             </div>
           </va-button>
-        </div>
+        </div> -->
+        
       </va-card-content>
     </va-card>
   </div>
 </template>
 
 <script setup>
-import config from "@/config";
 </script>
 
 <route lang="yaml">

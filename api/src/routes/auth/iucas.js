@@ -61,7 +61,9 @@ router.post(
       await login(test_user.cas_id);
     } else {
       console.log('validating ticket...');
-      IULogin.validate(req.body.ticket, req.body.service, false, async (err, cas_id) => {
+      console.log('req.body.ticket', req.body.ticket);
+      console.log('req.body.service', req.body.service);
+      await IULogin.validate(req.body.ticket, req.body.service, false, async (err, cas_id) => {
         console.log('If there is an err: ', err);
         if (err) return next(err);
         try {
