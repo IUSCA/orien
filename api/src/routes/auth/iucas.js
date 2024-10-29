@@ -11,9 +11,13 @@ const authService = require('../../services/auth');
 
 const router = express.Router();
 
+console.log('Starting Auth...');
+console.log('config.get(auth.mode)', config.get('auth.mode'));
+
 const IULogin = new IULoginHelper({
   protocol: 'CAS',
   mode: config.get('auth.mode'),
+  logs: true
 });
 
 router.get(
@@ -40,13 +44,13 @@ router.post(
 
     console.log('req.body.ticket', req.body.ticket);
     const login = async (cas_id) => {
-      console.log('getting user...')
+      console.log('getting user...');
       const user = await userService.findActiveUserBy('cas_id', cas_id);
 
       console.log('user', user);
       if (user) {
         const resObj = await authService.onLogin({ user });
-        
+
         console.log('resObj', resObj);
 
         return res.json(resObj);
@@ -64,7 +68,7 @@ router.post(
       console.log('req.body.ticket', req.body.ticket);
       console.log('req.body.service', req.body.service);
       await IULogin.validate(req.body.ticket, req.body.service, false, async (err, cas_id) => {
-        console.log('If there is an err: ', err);
+        if (err) console.log('If there is an err: ', err);
         if (err) return next(err);
         try {
           console.log('trying to login...');
