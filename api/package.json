@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@badgateway/oauth2-client": "^2.2.3",
-    "@iusca/iulogin-helper": "^0.1.4",
+    "@iusca/iulogin-helper": "github:IUSCA/IULogin-helper",
     "@prisma/client": "^5.4.2",
     "accesscontrol": "^2.2.1",
     "axios": "^1.5.0",
