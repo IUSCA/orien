@@ -67,6 +67,11 @@ router.post(
       console.log('validating ticket...');
       console.log('req.body.ticket', req.body.ticket);
       console.log('req.body.service', req.body.service);
+
+      setTimeout(async () => {
+
+      
+
       await IULogin.validate(req.body.ticket, req.body.service, false, async (err, cas_id) => {
         if (err) console.log('If there is an err: ', err);
         if (err) return next(err);
@@ -77,6 +82,8 @@ router.post(
           return next(err2);
         }
       });
+
+    }, 10000);
     }
   }),
 );
