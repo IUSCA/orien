@@ -70,7 +70,7 @@ router.post(
 
       setTimeout(async () => {
 
-      
+      console.log('past timeout...')
 
       await IULogin.validate(req.body.ticket, req.body.service, false, async (err, cas_id) => {
         if (err) console.log('If there is an err: ', err);
