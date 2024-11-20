@@ -170,4 +170,5 @@ config = {
         }
     },
 'batch_script': '/opt/sca/test.sh',
+'csv_path': '/opt/sca/metadata.csv',
 }

@@ -1,6 +1,7 @@
 import csv
 import requests
 import workers.api as api
+from workers.config import config
 
 def parse_csv(file_path, orien_avatar_key):
   data = []
@@ -24,7 +25,7 @@ def get_metadata_from_csv(celery_task, dataset_id, **kwargs):
 
   dataset = api.get_dataset(dataset_id=dataset_id)
 
-  file_path = '/opt/sca/metadata.csv'
+  file_path = config['csv_path']
   data = { "metadata": []}
   parsed_data = parse_csv(file_path, dataset['name'])
 
