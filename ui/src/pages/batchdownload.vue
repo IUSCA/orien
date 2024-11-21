@@ -1,11 +1,17 @@
 <script setup>
 import batchDownloadService from '@/services/batchDownload';
+import toast from "@/services/toast";
 
 const batch_id = ref('')
 
 const download = async () => {
   const results = await batchDownloadService.intiate_download(batch_id.value)
 
+  if(results.status === 200) {
+    toast.success('Download Initiated')
+  } else {
+    toast.error('Error Initiating Download')
+  }
 }
 
 
@@ -17,7 +23,6 @@ const download = async () => {
 <div class="flex flex-col justify-center items-center mt-2">
   <h1 class="text-2xl">Batch Download</h1>
   <div>
-
     <va-input label="Batch ID" v-model="batch_id" placeholder="Batch ID"  class="shadow my-2 mx-auto" />
   </div>
   <div>

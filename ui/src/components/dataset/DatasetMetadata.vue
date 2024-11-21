@@ -34,8 +34,8 @@ const reset_metadata = async () => {
 
     <!-- Edit button -->
     <div class="flex justify-end">
-      <AddEditButton class="flex-none" :edit="Object.keys(metadata).length !== 0"
-        :add="Object.keys(metadata).length > 0" @click="isModalOpen = true" />
+      <!-- <AddEditButton class="flex-none" :edit="Object.keys(metadata).length !== 0"
+        :add="Object.keys(metadata).length > 0" @click="isModalOpen = true" /> -->
     </div>
 
     <!-- Display key pair values as table -->
@@ -48,11 +48,11 @@ const reset_metadata = async () => {
       </tbody>
     </table>
 
-    <div class="flex justify-center items-center mt-2">
+    <!-- <div class="flex justify-center items-center mt-2">
       <div>
         <va-button @click="reset_metadata()" color="warning" icon="refresh" round  preset="secondary" border-color="warning" class="shadow my-2 mx-auto" > Reset to CSV Values</va-button>
       </div>
-    </div>
+    </div> -->
 
     <va-modal hide-default-actions v-model="isModalOpen" @close="isModalOpen = false">
       <template #default>

@@ -67,7 +67,7 @@ const format_tag = (tag) => {
       </div>
 
       <div v-else-if="metaData[meta][0].keyword?.datatype === 'STRING'">
-        <va-select v-model="form[meta]['data']" :options="metaData[meta]"  text-by="value" />
+        <va-select v-model="form[meta]['data']" :options="['', ...metaData[meta]]"  text-by="value" />
       </div>
 
       <div v-else-if="metaData[meta][0].keyword?.datatype === 'DATE'">
