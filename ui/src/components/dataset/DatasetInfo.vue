@@ -71,7 +71,7 @@ import { formatBytes } from "@/services/utils";
 
 const props = defineProps({ dataset: Object });
 
-
+console.log("in dataset info");
 </script>
 
 <style lang="scss" scoped>

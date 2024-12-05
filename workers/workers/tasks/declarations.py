@@ -137,3 +137,21 @@ def metadata(celery_task, dataset_id, **kwargs):
 def batch_download(celery_task, batch_id, **kwargs):
     from workers.tasks.bc2_batch_download import batch_download as task_body
     return task_body(celery_task, batch_id, **kwargs)
+
+
+@app.task(base=WorkflowTask, bind=True, name='process_dataset_upload',
+          autoretry_for=(exc.RetryableException,),
+          max_retries=3,
+          default_retry_delay=5)
+def process_dataset_upload(celery_task, dataset_id, **kwargs):
+    from workers.tasks.process_dataset_upload import process as task_body
+    return task_body(celery_task, dataset_id, **kwargs)
+
+
+@app.task(base=WorkflowTask, bind=True, name='cancel_dataset_upload',
+          autoretry_for=(exc.RetryableException,),
+          max_retries=3,
+          default_retry_delay=5)
+def cancel_dataset_upload(celery_task, dataset_id, **kwargs):
+    from workers.tasks.cancel_dataset_upload import purge_uploaded_resources as task_body
+    return task_body(celery_task, dataset_id, **kwargs)

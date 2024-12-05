@@ -1,5 +1,4 @@
 const fsPromises = require('fs/promises');
-
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const createError = require('http-errors');
@@ -9,6 +8,7 @@ const {
 const multer = require('multer');
 const _ = require('lodash/fp');
 const config = require('config');
+const pm = require('picomatch');
 
 // const logger = require('../services/logger');
 const asyncHandler = require('../middleware/asyncHandler');
@@ -16,6 +16,7 @@ const { accessControl, getPermission } = require('../middleware/auth');
 const { validate } = require('../middleware/validators');
 const datasetService = require('../services/dataset');
 const authService = require('../services/auth');
+const CONSTANTS = require('../constants');
 
 const isPermittedTo = accessControl('datasets');
 
@@ -30,6 +31,8 @@ router.get(
     query('type').isIn(config.dataset_types).optional(),
   ]),
   asyncHandler(async (req, res, next) => {
+    // #swagger.tags = ['datasets']
+    // #swagger.summary = 'Get summary statistics of datasets.'
     // #swagger.tags = ['datasets']
     // #swagger.summary = 'Get summary statistics of datasets.'
     let result;
@@ -111,13 +114,14 @@ const buildQueryObject = ({
   deleted, archived, staged, type, name, days_since_last_staged,
   has_workflows, has_derived_data, has_source_data,
   created_at_start, created_at_end, updated_at_start, updated_at_end,
+  match_name_exact,
 }, metaData = {}) => {
   const query_obj = _.omitBy(_.isUndefined)({
     is_deleted: deleted,
     is_staged: staged,
     type,
     name: name ? {
-      contains: name,
+      ...(match_name_exact ? { equals: name } : { contains: name }),
       mode: 'insensitive', // case-insensitive search
     } : undefined,
   });
@@ -338,9 +342,148 @@ const getOp = (op) => {
 }
 
 
-// Get all datasets, and the count of datasets. Results can optionally be filtered and sorted by
-// the criteria specified.
-// Used by workers + UI.
+router.post('/search',
+  isPermittedTo('read'),
+  // validate([
+  //   body('deleted').toBoolean().default(false),
+  //   body('has_workflows').toBoolean().optional(),
+  //   body('has_derived_data').toBoolean().optional(),
+  //   body('has_source_data').toBoolean().optional(),
+  //   body('archived').toBoolean().optional(),
+  //   body('staged').toBoolean().optional(),
+  //   body('type').isIn(config.dataset_types).optional(),
+  //   body('name').optional(),
+  //   body('days_since_last_staged').isInt().toInt().optional(),
+  //   body('bundle').optional().toBoolean(),
+  //   body('created_at_start').isISO8601().optional(),
+  //   body('created_at_end').isISO8601().optional(),
+  //   body('updated_at_start').isISO8601().optional(),
+  //   body('updated_at_end').isISO8601().optional(),
+  //   body('limit').isInt({ min: 1 }).toInt().optional(), // optional because watch script needs all datasets at once
+  //   body('offset').isInt({ min: 0 }).toInt().optional(),
+  //   body('sort_by').default('updated_at'),
+  //   body('sort_order').default('desc').isIn(['asc', 'desc']),
+  // ]),
+  asyncHandler(async (req, res, next) => {
+    // #swagger.tags = ['datasets']
+
+    const { metaData } = req.body
+    delete req.body.metaData
+
+
+
+    for (const [key, value] of Object.entries(req.body)) {
+      if (value === null) {
+        delete req.body[key]
+      }
+    }
+
+    const query_obj = buildQueryObject(req.body, metaData);
+
+    const filterQuery = { where: query_obj };
+
+    const orderBy = {
+      [req.body.sort_by]: req.body.sort_order,
+    };
+    const datasetRetrievalQuery = {
+      skip: req.body.offset,
+      take: req.body.limit,
+      ...filterQuery,
+      orderBy,
+      include: {
+        ...datasetService.INCLUDE_WORKFLOWS,
+        source_datasets: true,
+        derived_datasets: true,
+        bundle: 'bundle' in req.body ? req.body.bundle : false
+      },
+    };
+
+    if (Object.keys(metaData).length > 0) {
+
+      let keywords = metaDataQuery(metaData)
+
+      datasetRetrievalQuery.where = {
+        ...datasetRetrievalQuery.where,
+        keywords
+      }
+
+
+    }
+
+    console.log('QUERY', JSON.stringify(datasetRetrievalQuery));
+    console.log('FILTER', filterQuery);
+
+    // console.log(JSON.stringify(filterQuery, null, 2));
+    const [datasets, count] = await prisma.$transaction([
+      prisma.dataset.findMany({ ...datasetRetrievalQuery }),
+      prisma.dataset.count({ ...filterQuery }),
+    ]);
+
+    // console.log(datasets)
+
+    res.json({
+      metadata: { count },
+      datasets,
+    });
+  }),
+);
+
+const metaDataQuery = (metaData) => {
+
+  console.log('META DATA', metaData);
+
+  let keywords = { some: {} }
+
+  if (Object.keys(metaData).length === 1) {
+    for (const key of Object.keys(metaData)) {
+      const value = metaData[key]['data']['value']
+      keywords['some'] = {
+        value: {
+          [metaData[key]['op'] === '' ? 'equals' : getOp(metaData[key]['op'])]: value
+        }
+
+      }
+    }
+  } else {
+
+    for (const key of Object.keys(metaData)) {
+      const value = metaData[key]['data']['value'];
+      const condition = {
+        value: {
+          [metaData[key]['op'] === '' ? 'contains' : getOp(metaData[key]['op'])]: value
+        }
+      };
+      if(! ('AND' in keywords.some)) 
+        keywords.some = { AND: [] }
+
+      keywords.some.AND.push(condition);
+    }
+  }
+
+
+  console.log('KEYWORDS', keywords);
+
+  return keywords;
+}
+
+const getOp = (op) => {
+  switch (op) {
+    case '<':
+      return 'lt';
+    case '<=':
+      return 'lte';
+    case '>':
+      return 'gt';
+    case '>=':
+      return 'gte';
+    case '=':
+      return 'equals';
+  }
+}
+
+
+// Get all datasets, and the count of datasets. Results can optionally be
+// filtered and sorted by the criteria specified. Used by workers + UI.
 router.get(
   '/',
   isPermittedTo('read'),
@@ -364,6 +507,7 @@ router.get(
     query('sort_by').default('updated_at'),
     query('sort_order').default('desc').isIn(['asc', 'desc']),
 
+    query('match_name_exact').default(false).toBoolean(),
   ]),
   asyncHandler(async (req, res, next) => {
     // #swagger.tags = ['datasets']
@@ -380,14 +524,13 @@ router.get(
       ...filterQuery,
       orderBy,
       include: {
-        ...datasetService.INCLUDE_WORKFLOWS,
+        ...CONSTANTS.INCLUDE_WORKFLOWS,
         source_datasets: true,
         derived_datasets: true,
         bundle: req.query.bundle || false,
       },
     };
 
-    // console.log(JSON.stringify(filterQuery, null, 2));
     const [datasets, count] = await prisma.$transaction([
       prisma.dataset.findMany({ ...datasetRetrievalQuery }),
       prisma.dataset.count({ ...filterQuery }),
@@ -433,11 +576,13 @@ router.get(
     query('bundle').optional().toBoolean(),
     query('include_projects').optional().toBoolean(),
     query('initiator').optional().toBoolean(),
+    query('include_upload_log').toBoolean().default(false),
   ]),
   dataset_access_check,
   asyncHandler(async (req, res, next) => {
     // #swagger.tags = ['datasets']
-    // only select path and md5 columns from the dataset_file table if files is true
+    // only select path and md5 columns from the dataset_file table if files is
+    // true
 
     const dataset = await datasetService.get_dataset({
       id: req.params.id,
@@ -449,7 +594,9 @@ router.get(
       bundle: req.query.bundle || false,
       includeProjects: req.query.include_projects || false,
       initiator: req.query.initiator || false,
+      include_upload_log: req.query.include_upload_log,
     });
+
     res.json(dataset);
   }),
 );
@@ -462,14 +609,38 @@ router.post(
     body('du_size').optional().notEmpty().customSanitizer(BigInt), // convert to BigInt
     body('size').optional().notEmpty().customSanitizer(BigInt),
     body('bundle_size').optional().notEmpty().customSanitizer(BigInt),
+    body('ingestion_space').optional().escape().notEmpty(),
   ]),
   asyncHandler(async (req, res, next) => {
     // #swagger.tags = ['datasets']
     // #swagger.summary = 'Create a new dataset.'
-    /* #swagger.description = 'workflow_id is optional. If the request body has workflow_id,
+    /*
+    * #swagger.description = 'workflow_id is optional. If the request body has
+    * workflow_id,
         a new relation is created between dataset and given workflow_id'
     */
-    const { workflow_id, state, ...data } = req.body;
+    const {
+      workflow_id, state, ingestion_space, data,
+    } = req.body;
+
+    const { origin_path } = data;
+
+    // remove whitespaces from dataset name
+    data.name = data.name.split(' ').join('-');
+
+    if (ingestion_space) {
+      // if dataset's origin_path is a restricted for dataset creation, throw
+      // error
+      const restricted_ingestion_dirs = config.restricted_ingestion_dirs[ingestion_space].split(',');
+      const origin_path_is_restricted = restricted_ingestion_dirs.some((glob) => {
+        const isMatch = pm(glob);
+        const matches = isMatch(origin_path, glob);
+        return matches.isMatch;
+      });
+      if (origin_path_is_restricted) {
+        return next(createError.Forbidden());
+      }
+    }
 
     // create workflow association
     if (workflow_id) {
@@ -495,7 +666,7 @@ router.post(
     const dataset = await prisma.dataset.create({
       data,
       include: {
-        ...datasetService.INCLUDE_WORKFLOWS,
+        ...CONSTANTS.INCLUDE_WORKFLOWS,
       },
     });
 
@@ -551,7 +722,7 @@ router.patch(
       },
       data,
       include: {
-        ...datasetService.INCLUDE_WORKFLOWS,
+        ...CONSTANTS.INCLUDE_WORKFLOWS,
         source_datasets: true,
         derived_datasets: true,
       },
@@ -664,14 +835,16 @@ router.post(
     // user role can only run stage workflows
 
     // allowed_wfs is an object with keys as workflow names and values as true
-    // filter only works on objects not arrays, so we use an object with true value
+    // filter only works on objects not arrays, so we use an object with true
+    // value
     const allowed_wfs = req.permission.filter({ [req.params.wf]: true });
     if (allowed_wfs[req.params.wf]) {
       return next();
     }
     next(createError.Forbidden());
   },
-  // user role can only run wf on the datasets they can access through project associations
+  // user role can only run wf on the datasets they can access through project
+  // associations
   dataset_access_check,
   asyncHandler(async (req, res, next) => {
     // #swagger.tags = ['datasets']
@@ -765,7 +938,8 @@ router.get(
       base: req.query.basepath,
     });
     // cache indefinitely - 1 year
-    // use ui/src/config.js file_browser.cache_busting_id to invalidate cache if a need arises
+    // use ui/src/config.js file_browser.cache_busting_id to invalidate cache
+    // if a need arises
     res.set('Cache-control', 'private, max-age=31536000');
     res.json(files);
   }),
@@ -802,10 +976,15 @@ router.get(
     // #swagger.tags = ['datasets']
     // #swagger.summary = Get file download URL and token
 
+    if (!config.enabled_features.downloads) {
+      return next(createError.Forbidden('The Download feature is currently disabled'));
+    }
+
     const isFileDownload = !!req.query.file_id;
 
     // Log the data access attempt first.
-    // Catch errors to ensure that logging does not get in the way of a token being returned.
+    // Catch errors to ensure that logging does not get in the way of a token
+    // being returned.
     try {
       await prisma.data_access_log.create({
         data: {
@@ -843,13 +1022,14 @@ router.get(
         ? `${dataset.metadata.stage_alias}/${file.path}`
         : `${dataset.metadata.bundle_alias}`;
 
-      const url = new URL(download_file_path, config.get('download_server.base_url'));
-
-      // use url.pathname instead of download_file_path to deal with spaces in the file path
-      // oauth scope cannot contain spaces
+      const url = new URL(download_file_path, `${config.get('download_server.base_url')}`);
+      // use url.pathname instead of download_file_path to deal with spaces in
+      // the file path oauth scope cannot contain spaces
       const download_token = await authService.get_download_token(url.pathname);
+
+      const downloadUrl = new URL(`download/${download_file_path}`, config.get('download_server.base_url'));
       res.json({
-        url: url.href,
+        url: downloadUrl.href,
         bearer_token: download_token.accessToken,
       });
     } else {

@@ -113,7 +113,9 @@
                     Delete Archive
                   </va-button>
 
-                  <va-button :disabled="!dataset.is_staged" class="flex-initial" color="primary" border-color="primary"
+                  <va-button :disabled="
+                      !dataset.is_staged || !config.enabledFeatures.downloads
+                    " class="flex-initial" color="primary" border-color="primary"
                     preset="secondary" @click="openModalToDownloadDataset">
                     <i-mdi-download class="pr-2 text-2xl" /> Download
                   </va-button>
@@ -335,8 +337,9 @@ watch(
 
 /**
  * providing the interval directly will kick of the polling immediately
- * provide a ref which will resolve to null when there are no active workflows and to 10s otherwise
- * now it can be controlled by resume and pause whenever active_wf changes
+ * provide a ref which will resolve to null when there are no active workflows
+ * and to 10s otherwise now it can be controlled by resume and pause whenever
+ * active_wf changes
  */
 const poll = useIntervalFn(fetch_dataset, polling_interval);
 

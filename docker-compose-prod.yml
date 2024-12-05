@@ -17,11 +17,10 @@ services:
     restart: unless-stopped
     image: localhost/bioloop_api
     volumes:
-      - ./api/:/opt/sca/app:z
-      - api_modules:/opt/sca/app/node_modules:z
-      - ~/.ssh/:/root/.ssh:z
-        #environment:
-        #PODMAN_USERNS: "keep-id:uid=${APP_UID}:1000,gid=${APP_GID}:1000" # Define in .env
+      - ./api/:/opt/sca/app
+      - api_modules:/opt/sca/app/node_modules
+      - ${FILESYSTEM_BASE_DIR_SCRATCH}:${FILESYSTEM_MOUNT_DIR_SCRATCH}
+      - ${FILESYSTEM_BASE_DIR_PROJECT}:${FILESYSTEM_MOUNT_DIR_PROJECT}
     expose:
       - 3030
     ports:
@@ -33,10 +32,7 @@ services:
     networks:
       bioloop_network:
         ipv4_address: 172.19.0.2
-      rhythm_bioloop_bridge:
-        ipv4_address: 172.19.2.3
-      # signet_network:
-      #   ipv4_address: 172.19.3.6
+
 
   postgres:
     image: docker.io/library/postgres:14.5

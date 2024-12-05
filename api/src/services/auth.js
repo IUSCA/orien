@@ -55,7 +55,7 @@ function checkJWT(token) {
   }
 }
 
-const oAuth2DownloadClient = new OAuth2Client({
+const oAuth2SecureTransferClient = new OAuth2Client({
   // The base URI of your OAuth2 server
   server: config.get('oauth.base_url'),
   // OAuth2 client id
@@ -65,7 +65,7 @@ const oAuth2DownloadClient = new OAuth2Client({
 });
 
 function get_download_token(file_path) {
-  return oAuth2DownloadClient.clientCredentials({
+  return oAuth2SecureTransferClient.clientCredentials({
     scope: [`${config.get('oauth.download.scope_prefix')}${file_path}`],
   });
 }
@@ -105,6 +105,14 @@ const find_or_create_test_user = async ({ role }) => {
   return test_user;
 };
 
+function get_upload_token(file_path) {
+  const hyphen_delimited_file_path = file_path.split(' ').join('-'); // replace whitespaces with hyphens
+  const scope = `${config.get('oauth.upload.scope_prefix')}${hyphen_delimited_file_path}`;
+  return oAuth2SecureTransferClient.clientCredentials({
+    scope: [scope],
+  });
+}
+
 module.exports = {
   onLogin,
   issueJWT,
@@ -112,4 +120,5 @@ module.exports = {
   get_user_profile,
   get_download_token,
   find_or_create_test_user,
+  get_upload_token,
 };

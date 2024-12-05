@@ -52,6 +52,15 @@ const grantsObject = {
       'update:any': ['*'],
       'delete:any': ['*'],
     },
+    fs: {
+      'read:any': ['*'],
+    },
+    upload: {
+      'create:any': ['*'],
+      'read:any': ['*'],
+      'update:any': ['*'],
+      'delete:any': ['*'],
+    },
     batch_download: {
       'create:any': ['*'],
 
@@ -120,10 +129,15 @@ const grantsObject = {
       'delete:any': ['*'],
     },
     notifications: {
-      'create:any': ['*'],
       'read:any': ['*'],
       'update:any': ['*'],
       'delete:any': ['*'],
+    },
+    fs: {
+      'read:any': ['*'],
+    },
+    upload: {
+      'create:any': ['*'],
     },
   },
 };
