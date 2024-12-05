@@ -133,7 +133,7 @@ services:
   rhythm:
     restart: unless-stopped
     build:
-      context: ./rhythm
+      context: ./rhythm_api
     expose:
       - 5001
     ports:
@@ -141,7 +141,7 @@ services:
     environment:
       - PORT=5001
     volumes:
-      - ./rhythm:/opt/sca
+      - ./rhythm_api:/opt/sca
     depends_on:
       - queue
       - mongo
