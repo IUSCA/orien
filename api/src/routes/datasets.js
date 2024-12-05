@@ -228,7 +228,9 @@ router.post('/search',
     // #swagger.tags = ['datasets']
 
     const { metaData } = req.body
-    delete req.body.metaData
+
+    if(metaData && Object.keys(metaData).length > 0)
+      delete req.body.metaData
 
 
 
@@ -238,7 +240,7 @@ router.post('/search',
       }
     }
 
-    const query_obj = buildQueryObject(req.body, metaData);
+    const query_obj = buildQueryObject(req.body, (metaData && Object.keys(metaData).length > 0) ? metaData : {});
 
     const filterQuery = { where: query_obj };
 
@@ -258,7 +260,7 @@ router.post('/search',
       },
     };
 
-    if (Object.keys(metaData).length > 0) {
+    if (metaData && Object.keys(metaData).length > 0) {
 
       let keywords = metaDataQuery(metaData)
 
@@ -266,147 +268,6 @@ router.post('/search',
         ...datasetRetrievalQuery.where,
         keywords
       }
-
-
-    }
-
-    console.log('QUERY', JSON.stringify(datasetRetrievalQuery));
-    console.log('FILTER', filterQuery);
-
-    // console.log(JSON.stringify(filterQuery, null, 2));
-    const [datasets, count] = await prisma.$transaction([
-      prisma.dataset.findMany({ ...datasetRetrievalQuery }),
-      prisma.dataset.count({ ...filterQuery }),
-    ]);
-
-    // console.log(datasets)
-
-    res.json({
-      metadata: { count },
-      datasets,
-    });
-  }),
-);
-
-const metaDataQuery = (metaData) => {
-
-  console.log('META DATA', metaData);
-
-  let keywords = { some: {} }
-
-  if (Object.keys(metaData).length === 1) {
-    for (const key of Object.keys(metaData)) {
-      const value = metaData[key]['data']['value']
-      keywords['some'] = {
-        value: {
-          [metaData[key]['op'] === '' ? 'equals' : getOp(metaData[key]['op'])]: value
-        }
-
-      }
-    }
-  } else {
-
-    for (const key of Object.keys(metaData)) {
-      const value = metaData[key]['data']['value'];
-      const condition = {
-        value: {
-          [metaData[key]['op'] === '' ? 'contains' : getOp(metaData[key]['op'])]: value
-        }
-      };
-      if(! ('AND' in keywords.some)) 
-        keywords.some = { AND: [] }
-
-      keywords.some.AND.push(condition);
-    }
-  }
-
-
-  console.log('KEYWORDS', keywords);
-
-  return keywords;
-}
-
-const getOp = (op) => {
-  switch (op) {
-    case '<':
-      return 'lt';
-    case '<=':
-      return 'lte';
-    case '>':
-      return 'gt';
-    case '>=':
-      return 'gte';
-    case '=':
-      return 'equals';
-  }
-}
-
-
-router.post('/search',
-  isPermittedTo('read'),
-  // validate([
-  //   body('deleted').toBoolean().default(false),
-  //   body('has_workflows').toBoolean().optional(),
-  //   body('has_derived_data').toBoolean().optional(),
-  //   body('has_source_data').toBoolean().optional(),
-  //   body('archived').toBoolean().optional(),
-  //   body('staged').toBoolean().optional(),
-  //   body('type').isIn(config.dataset_types).optional(),
-  //   body('name').optional(),
-  //   body('days_since_last_staged').isInt().toInt().optional(),
-  //   body('bundle').optional().toBoolean(),
-  //   body('created_at_start').isISO8601().optional(),
-  //   body('created_at_end').isISO8601().optional(),
-  //   body('updated_at_start').isISO8601().optional(),
-  //   body('updated_at_end').isISO8601().optional(),
-  //   body('limit').isInt({ min: 1 }).toInt().optional(), // optional because watch script needs all datasets at once
-  //   body('offset').isInt({ min: 0 }).toInt().optional(),
-  //   body('sort_by').default('updated_at'),
-  //   body('sort_order').default('desc').isIn(['asc', 'desc']),
-  // ]),
-  asyncHandler(async (req, res, next) => {
-    // #swagger.tags = ['datasets']
-
-    const { metaData } = req.body
-    delete req.body.metaData
-
-
-
-    for (const [key, value] of Object.entries(req.body)) {
-      if (value === null) {
-        delete req.body[key]
-      }
-    }
-
-    const query_obj = buildQueryObject(req.body, metaData);
-
-    const filterQuery = { where: query_obj };
-
-    const orderBy = {
-      [req.body.sort_by]: req.body.sort_order,
-    };
-    const datasetRetrievalQuery = {
-      skip: req.body.offset,
-      take: req.body.limit,
-      ...filterQuery,
-      orderBy,
-      include: {
-        ...datasetService.INCLUDE_WORKFLOWS,
-        source_datasets: true,
-        derived_datasets: true,
-        bundle: 'bundle' in req.body ? req.body.bundle : false
-      },
-    };
-
-    if (Object.keys(metaData).length > 0) {
-
-      let keywords = metaDataQuery(metaData)
-
-      datasetRetrievalQuery.where = {
-        ...datasetRetrievalQuery.where,
-        keywords
-      }
-
 
     }
 

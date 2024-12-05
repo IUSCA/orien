@@ -37,7 +37,8 @@ model dataset {
   accesses           data_access_log[]
   stage_requests     stage_request_log[]
   bundle             bundle?
-  keywords         keyword_value[]  dataset_upload_log dataset_upload_log?
+  keywords           keyword_value[]
+  dataset_upload_log dataset_upload_log?
 
   @@unique([name, type, is_deleted])
 }

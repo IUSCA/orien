@@ -109,7 +109,12 @@ const exports = {
         test_id: "sidebar-logout",
       },
     ],
-    admin_items: [],
+    admin_items: [{
+      icon: "carbon:batch-job",
+      title: "Batch Download",
+      path: "/batchdownload",
+      test_id: "sidebar-batch-download",
+    }],
   },
   UPLOAD_STATES: {
     UNINITIATED: "Uninitiated",
