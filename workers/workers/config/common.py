@@ -147,6 +147,10 @@ config = {
                 {
                     'name': 'setup_download',
                     'task': 'setup_dataset_download'
+                },
+                {
+                    'name': 'delete_source',
+                    'task': 'delete_source'
                 }
             ]
         },

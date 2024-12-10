@@ -11,9 +11,6 @@ const authService = require('../../services/auth');
 
 const router = express.Router();
 
-console.log('Starting Auth...');
-console.log('config.get(auth.mode)', config.get('auth.mode'));
-
 const IULogin = new IULoginHelper({
   protocol: 'CAS',
   mode: config.get('auth.mode'),
@@ -42,16 +39,14 @@ router.post(
     // #swagger.tags = ['Auth']
     // eslint-disable-next-line no-unused-vars
 
-    console.log('req.body.ticket', req.body.ticket);
+
     const login = async (cas_id) => {
-      console.log('getting user...');
+
       const user = await userService.findActiveUserBy('cas_id', cas_id);
 
-      console.log('user', user);
+
       if (user) {
         const resObj = await authService.onLogin({ user });
-
-        console.log('resObj', resObj);
 
         return res.json(resObj);
       }
@@ -64,26 +59,20 @@ router.post(
       const test_user = await authService.find_or_create_test_user({ role: req.body.ticket });
       await login(test_user.cas_id);
     } else {
-      console.log('validating ticket...');
-      console.log('req.body.ticket', req.body.ticket);
-      console.log('req.body.service', req.body.service);
 
-      setTimeout(async () => {
-
-      console.log('past timeout...')
-
+  
       await IULogin.validate(req.body.ticket, req.body.service, false, async (err, cas_id) => {
-        if (err) console.log('If there is an err: ', err);
+        // if (err) console.log('If there is an err: ', err);
         if (err) return next(err);
         try {
-          console.log('trying to login...');
+
           await login(cas_id);
         } catch (err2) {
           return next(err2);
         }
       });
 
-    }, 10000);
+
     }
   }),
 );
