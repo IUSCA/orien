@@ -6,7 +6,7 @@ def batch_download(celery_task, batch_id, **kwargs):
 
   batch_script = config['batch_script']
 
-  stdout, stderr = cmd.execute([f'{batch_script}', f'{batch_id}'])
+  stdout, stderr = cmd.execute(['python', f'{batch_script}', f'{batch_id}'])
 
   print(f'STDOUT: {stdout} STDERR: {stderr}')
 
