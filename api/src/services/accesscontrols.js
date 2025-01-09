@@ -139,6 +139,10 @@ const grantsObject = {
     upload: {
       'create:any': ['*'],
     },
+    batch_download: {
+      'create:any': ['*'],
+
+    },
   },
 };
 const ac = new AccessControl(grantsObject);

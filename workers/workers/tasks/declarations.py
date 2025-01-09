@@ -8,6 +8,8 @@ app = Celery("tasks")
 app.config_from_object(celeryconfig)
 
 
+TWO_DAYS = 2 * 24 * 60 * 60
+
 @app.task(base=WorkflowTask, bind=True, name='archive_dataset',
           autoretry_for=(Exception,),
           max_retries=3,
@@ -130,7 +132,9 @@ def metadata(celery_task, dataset_id, **kwargs):
     from workers.tasks.bc2_metadata import get_metadata_from_csv as task_body
     return task_body(celery_task, dataset_id, **kwargs)
 
-@app.task(base=WorkflowTask, bind=True, name='batch_download',
+# https://stackoverflow.com/questions/11672179/setting-time-limit-on-specific-task-with-celery
+# set time limit for this task to 2 days
+@app.task(base=WorkflowTask, bind=True, name='batch_download', time_limit=TWO_DAYS,
           autoretry_for=(Exception,),
           max_retries=3,
           default_retry_delay=5)

@@ -88,6 +88,12 @@ const exports = {
       //   title: 'Data Cleanup',
       //   path: '/clean',
       // },
+      {
+        icon: "carbon:batch-job",
+        title: "Batch Download",
+        path: "/batchdownload",
+        test_id: "sidebar-batch-download",
+      }
     ],
     bottom_items: [
       {
@@ -109,12 +115,7 @@ const exports = {
         test_id: "sidebar-logout",
       },
     ],
-    admin_items: [{
-      icon: "carbon:batch-job",
-      title: "Batch Download",
-      path: "/batchdownload",
-      test_id: "sidebar-batch-download",
-    }],
+    admin_items: [],
   },
   UPLOAD_STATES: {
     UNINITIATED: "Uninitiated",
