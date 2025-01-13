@@ -134,10 +134,7 @@ def metadata(celery_task, dataset_id, **kwargs):
 
 # https://stackoverflow.com/questions/11672179/setting-time-limit-on-specific-task-with-celery
 # set time limit for this task to 2 days
-@app.task(base=WorkflowTask, bind=True, name='batch_download', time_limit=TWO_DAYS,
-          autoretry_for=(Exception,),
-          max_retries=3,
-          default_retry_delay=5)
+@app.task(base=WorkflowTask, bind=True, name='batch_download', time_limit=TWO_DAYS,)
 def batch_download(celery_task, batch_id, **kwargs):
     from workers.tasks.bc2_batch_download import batch_download as task_body
     return task_body(celery_task, batch_id, **kwargs)

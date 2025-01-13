@@ -10,7 +10,9 @@ def batch_download(celery_task, batch_id, **kwargs):
 
   print(f'STDOUT: {stdout} STDERR: {stderr}')
 
-  if stderr:
-    raise Exception(stderr)
+  # if stderr:
+  #   raise Exception(stderr)
+
+  
   
   return batch_id,
