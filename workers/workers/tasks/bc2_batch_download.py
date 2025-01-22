@@ -10,11 +10,9 @@ def batch_download(celery_task, batch_id, **kwargs):
 
   stdout, stderr = cmd.execute(['python', f'{batch_script}', f'{batch_id}'])
 
-  print(f'STDOUT: {stdout} STDERR: {stderr}')
-
-
   logger.info(f'STDOUT: {stdout} STDERR: {stderr}')
 
+  # print(f'STDOUT: {stdout} STDERR: {stderr}')
   # if stderr:
   #   raise Exception(stderr)
 

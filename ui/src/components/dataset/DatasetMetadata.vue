@@ -20,13 +20,13 @@ const updatedMetadata = async () => {
   isModalOpen.value = false;
 };
 
-const reset_metadata = async () => {
-  await DatasetService.reset_metadata(id);
-  setTimeout(() => {
-    getMetadata();
-  }, 2000);
+// const reset_metadata = async () => {
+//   await DatasetService.reset_metadata(id);
+//   setTimeout(() => {
+//     getMetadata();
+//   }, 2000);
 
-};
+// };
 </script>
 
 <template>

@@ -12,15 +12,6 @@ def parse_csv(file_path, orien_avatar_key):
         data.append(row)
   return data
 
-def send_to_api(data, api_url):
-  headers = {'Content-Type': 'application/json'}
-  for item in data:
-    response = requests.post(api_url, json=item, headers=headers)
-    if response.status_code != 200:
-      print(f"Failed to send data: {item}")
-    else:
-      print(f"Successfully sent data: {item}")
-
 def get_metadata_from_csv(celery_task, dataset_id, **kwargs):
 
   dataset = api.get_dataset(dataset_id=dataset_id)

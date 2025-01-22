@@ -23,6 +23,8 @@ const isPermittedTo = accessControl('datasets');
 const router = express.Router();
 const prisma = new PrismaClient();
 
+const ignore_keywords = ['avatar_folder', 'target_relative_file_path', 'directory_name', 'file_name', 'file_size', 'sequencing_type', 'data_format'];
+
 // stats - UI
 router.get(
   '/stats',
@@ -1032,6 +1034,9 @@ router.patch('/:id/metadata', asyncHandler(async (req, res, next) => {
   // create new metadata
   const createMetadataPromises = metadata.map(async (mdata) => {
 
+    if(ignore_keywords.includes(mdata.name)) {
+      return;
+    }
 
     // set the keyword_id
     const keyword_id = 'keyword_id' in mdata 
@@ -1073,11 +1078,16 @@ router.patch('/metadata/keyword', asyncHandler(async (req, res, next) => {
 
   const keywords = req.body;
 
+  
+
   console.log('KEYWORDS', keywords);
 
   for(const keyword of keywords) {
 
-
+  
+    if(ignore_keywords.includes(keyword)) {
+      continue;
+    }
     await prisma.keyword.upsert({
       where: {
         name: keyword,
