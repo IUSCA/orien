@@ -1,5 +1,4 @@
 import csv
-import requests
 import workers.api as api
 from workers.config import config
 
@@ -8,7 +7,7 @@ def parse_csv(file_path, orien_avatar_key):
   with open(file_path, mode='r') as file:
     csv_reader = csv.DictReader(file)
     for row in csv_reader:
-      if row['orien_avatar_key'] == orien_avatar_key:
+      if row['bioloop_id'] == orien_avatar_key:
         data.append(row)
   return data
 
